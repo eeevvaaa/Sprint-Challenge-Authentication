@@ -1,10 +1,8 @@
 const axios = require("axios");
 const db = require("../database/dbConfig");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const secret = 'Did you hear about the restaurant on the moon? Great food, no atmosphere.'
 
-const { authenticate } = require("./middlewares");
+const { authenticate, generateToken } = require("./middlewares");
 
 module.exports = server => {
   server.post("/api/register", register);
@@ -12,15 +10,7 @@ module.exports = server => {
   server.get("/api/jokes", authenticate, getJokes);
 };
 
-function generateToken(user) {
-  const payload = {
-    username: user.username
-  };
-  const options = {
-    expiresIn: "1h"
-  };
-  return jwt.sign(payload, secret, options);
-}
+
 
 function register(req, res) {
   // implement user registration
@@ -44,7 +34,7 @@ function login(req, res) {
     .first()
     .then(user => {
       if (user && bcrypt.compareSync(creds.password, user.password)) {
-        const token = generateToken(user);
+        let token = generateToken(user);
         return res.status(200).json({ welcome: user.username, token });
       } else {
         return res
@@ -53,6 +43,7 @@ function login(req, res) {
       }
     })
     .catch(err => {
+      console.log(err)
       res.status(500).json(err);
     });
 }
